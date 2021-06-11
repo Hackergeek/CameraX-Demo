@@ -16,7 +16,6 @@ import androidx.camera.core.VideoCapture.OnVideoSavedCallback
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LiveData
 import com.dubhe.camera.CameraXCustomPreviewView.CustomTouchListener
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.android.synthetic.main.activity_main.*
@@ -88,10 +87,11 @@ class MainActivity : AppCompatActivity() {
                     val factory = viewFinder.createMeteringPointFactory(cameraSelector)
                     val point = factory.createPoint(x, y)
                     val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
-                            .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                            .build()
+                        .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                        .build()
                     focusView.startFocus(Point(x.toInt(), y.toInt()))
-                    val future: ListenableFuture<*> = camera!!.cameraControl.startFocusAndMetering(action)
+                    val future: ListenableFuture<*> =
+                        camera!!.cameraControl.startFocusAndMetering(action)
                     future.addListener(Runnable {
                         try {
                             val result = future.get() as FocusMeteringResult
@@ -124,12 +124,17 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
             } else {
-                Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT)
+                    .show()
                 finish()
             }
         }
@@ -143,30 +148,36 @@ class MainActivity : AppCompatActivity() {
 
             //预览配置
             preview = Preview.Builder()
-                    .build()
-                    .also {
-                        it.setSurfaceProvider(viewFinder.createSurfaceProvider())
-                    }
+                .build()
+                .also {
+                    it.setSurfaceProvider(viewFinder.createSurfaceProvider())
+                }
 
             imageCapture = ImageCapture.Builder().build()//拍照用例配置
 
             val imageAnalyzer = ImageAnalysis.Builder()
-                    .build()
-                    .also {
-                        it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                            Log.d(TAG, "Average luminosity: $luma")
-                        })
-                    }
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
+                        Log.d(TAG, "Average luminosity: $luma")
+                    })
+                }
 
             videoCapture = VideoCapture.Builder()//录像用例配置
 //                .setTargetAspectRatio(AspectRatio.RATIO_16_9) //设置高宽比
 //                .setTargetRotation(viewFinder.display.rotation)//设置旋转角度
 //                .setAudioRecordSource(AudioSource.MIC)//设置音频源麦克风
-                    .build()
+                .build()
 
             try {
                 cameraProvider?.unbindAll()//先解绑所有用例
-                camera = cameraProvider?.bindToLifecycle(this, cameraSelector, preview, imageCapture, videoCapture)//绑定用例
+                camera = cameraProvider?.bindToLifecycle(
+                    this,
+                    cameraSelector,
+                    preview,
+                    imageCapture,
+                    videoCapture
+                )//绑定用例
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -178,45 +189,58 @@ class MainActivity : AppCompatActivity() {
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
 
-        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).path +
-                "/CameraX" + SimpleDateFormat(FILENAME_FORMAT, Locale.CHINA).format(System.currentTimeMillis()) + ".jpg")
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).path +
+                    "/CameraX" + SimpleDateFormat(
+                FILENAME_FORMAT,
+                Locale.CHINA
+            ).format(System.currentTimeMillis()) + ".jpg"
+        )
 
         val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
 
         imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this),
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onError(exc: ImageCaptureException) {
-                        Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
-                    }
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                }
 
-                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                        val savedUri = Uri.fromFile(file)
-                        val msg = "Photo capture succeeded: $savedUri"
-                        Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-                        Log.d(TAG, msg)
-                    }
-                })
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val savedUri = Uri.fromFile(file)
+                    val msg = "Photo capture succeeded: $savedUri"
+                    Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, msg)
+                }
+            })
     }
 
-    @SuppressLint("RestrictedApi", "ClickableViewAccessibility")
+    @SuppressLint("RestrictedApi", "ClickableViewAccessibility", "MissingPermission")
     private fun takeVideo() {
 
         //视频保存路径
-        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).path + "/CameraX" + SimpleDateFormat(
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).path + "/CameraX" + SimpleDateFormat(
                 FILENAME_FORMAT, Locale.CHINA
-        ).format(System.currentTimeMillis()) + ".mp4")
+            ).format(System.currentTimeMillis()) + ".mp4"
+        )
         //开始录像
-        videoCapture?.startRecording(file, Executors.newSingleThreadExecutor(), object : OnVideoSavedCallback {
-            override fun onVideoSaved(@NonNull file: File) {
-                //保存视频成功回调，会在停止录制时被调用
-                Toast.makeText(this@MainActivity, file.absolutePath, Toast.LENGTH_SHORT).show()
-            }
+        videoCapture?.startRecording(
+            file,
+            Executors.newSingleThreadExecutor(),
+            object : OnVideoSavedCallback {
+                override fun onVideoSaved(@NonNull file: File) {
+                    runOnUiThread {
+                        //保存视频成功回调，会在停止录制时被调用
+                        Toast.makeText(this@MainActivity, file.absolutePath, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
 
-            override fun onError(videoCaptureError: Int, message: String, cause: Throwable?) {
-                //保存失败的回调，可能在开始或结束录制时被调用
-                Log.e("", "onError: $message")
-            }
-        })
+                override fun onError(videoCaptureError: Int, message: String, cause: Throwable?) {
+                    //保存失败的回调，可能在开始或结束录制时被调用
+                    Log.e("", "onError: $message")
+                }
+            })
 
         btnStartVideo.setOnClickListener {
             videoCapture?.stopRecording()//停止录制
@@ -266,7 +290,9 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "CameraXBasic"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO)
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO
+        )
     }
 }
