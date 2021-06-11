@@ -58,10 +58,10 @@ class MainActivity : AppCompatActivity() {
             takeVideo()
         }
         btnSwitch.setOnClickListener {
-            if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
-                cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+            cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+                CameraSelector.DEFAULT_FRONT_CAMERA
             } else {
-                cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                CameraSelector.DEFAULT_BACK_CAMERA
             }
             startCamera()
         }
@@ -129,6 +129,7 @@ class MainActivity : AppCompatActivity() {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 startCamera()
@@ -191,7 +192,7 @@ class MainActivity : AppCompatActivity() {
 
         val file = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).path +
-                    "/CameraX" + SimpleDateFormat(
+                    "/CameraX/" + SimpleDateFormat(
                 FILENAME_FORMAT,
                 Locale.CHINA
             ).format(System.currentTimeMillis()) + ".jpg"

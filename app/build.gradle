@@ -45,7 +45,7 @@ dependencies {
     // 可以使用CameraView
     implementation "androidx.camera:camera-view:1.0.0-alpha14"
     // 可以使用供应商扩展
-    implementation "androidx.camera:camera-extensions:1.0.0-alpha14"
+//    implementation "androidx.camera:camera-extensions:1.0.0-alpha14"
     //camerax的生命周期库
     implementation "androidx.camera:camera-lifecycle:1.0.0-beta07"
 
